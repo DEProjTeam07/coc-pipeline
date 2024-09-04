@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  postgresql-main:
+    image: 'bitnami/postgresql:latest'
+    ports:
+      - '5432:5432'
+    restart: on-failure
+    volumes:
+      - postgresql_main_data:/bitnami/postgresql
+      - ./replication-user-grant.sql:/docker-entrypoint-initdb. d/db.sql
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master              # 복제 모드 [master / slave]
+      - POSTGRESQL_REPLICATION_USER=repl_user           # 복제 사용자 이름
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_password   # 복제 사용자 비밀번호
+      - POSTGRESQL_USERNAME=admin
+      - POSTGRESQL_PASSWORD=proj777!
+      - POSTGRESQL_DATABASE=FLAT_FIX
+  postgresql-standby:
+    image: 'bitnami/postgresql:latest'
+    ports:
+      - '5433:5432'
+    restart: on-failure
+    depends_on:
+      - postgresql-main
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave               # 복제 모드 [master / slave]
+      - POSTGRESQL_REPLICATION_USER=repl_user           # 복제 사용자 이름
+      - POSTGRESQL_REPLICATION_PASSWORD=repl_password   # 복제 사용자 비밀번호
+      - POSTGRESQL_MASTER_HOST=postgresql-main
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_USERNAME=admin
+      - POSTGRESQL_PASSWORD=proj777!
+volumes:
+  postgresql_main_data:
+    driver: local
