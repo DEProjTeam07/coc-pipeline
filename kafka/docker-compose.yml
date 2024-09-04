@@ -1,0 +1,23 @@
+```yaml
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.5.3
+    container_name: kafka
+    extra_hosts:
+      - "server01:172.31.3.183"
+      - "server02:172.31.2.37"
+      - "server03:172.31.0.17"
+
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    env_file:
+      - .env
+    user: "1000:1000"
+    volumes:
+      - kafka_volume:/var/lib/kafka/data
+volumes:
+  kafka_volume:
+    driver: local
+
+```
