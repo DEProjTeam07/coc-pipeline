@@ -16,9 +16,6 @@ services:
     user: "1001"
     ports:
       - "5433:5432"
-    volumes:
-      - ./config/conf_files/pgpool_hba.conf:/opt/bitnami/pgpool/conf/pgpool_hba.conf
-      - ./config/conf_files/pgpool_conf.conf:/opt/bitnami/pgpool/conf/pgpool.conf
     env_file:
       - path: ./config/env/.pgpool_env
         required: true
