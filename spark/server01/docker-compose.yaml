@@ -1,0 +1,38 @@
+# Spark Master Node를 Image로 만들고(최초) Container로 Up 하도록 정의
+## Docker Container Up 할 떄 bridge network가 아니라 host network를 이용한다.  
+version: '3.8'
+services: 
+  spark-master:
+    build: 
+      context: .  
+      dockerfile: Dockerfile 
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=172.31.3.183
+      - SPARK_MASTER_WEBUI_PORT=8085
+      - SPARK_MASTER_PORT=7077
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      - BUCKET_TEST_NAME={{테스트 성격을 가진 AWS S3 BUCKET 이름}}  # 테스트 성격의 AWS S3-2 BUCKET
+      - BUCKET_DEV_NAME={{실제로 쓰이는 AWS S3 BUCKET 이름}}         # 실제 운영 성격의 AWS S3-2 BUCKET 
+    volumes:
+      - ./dev:/opt/bitnami/spark/dev
+    restart: always
+    network_mode: "host"
+
+
+
+
+
+
+
+
+
+
+
+
+
