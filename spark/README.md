@@ -28,7 +28,6 @@
 
   <br>
 
-    ![image](./images/structure.png)
 
   <br>
 
@@ -90,8 +89,6 @@
           - Spark Submit한 Job들에서 Worker들이 얼마나 일을 분배해서 처리했는지 자원은 얼마나 사용했는지를 보여주는 상세 웹 UI이다. 
 
           <br>
-
-           ![history_server](./images/history_server.png)
   
   <br>
 
