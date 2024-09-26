@@ -99,27 +99,27 @@
         ## Docker Container Up 할 떄 bridge network가 아니라 host network를 이용한다.  
         version: '3.8'
         services: 
-        spark-master:
-            build: 
-            context: .  
-            dockerfile: Dockerfile 
-            container_name: spark-master
-            environment:
-            - SPARK_MODE=master
-            - SPARK_MASTER_HOST=172.31.3.183
-            - SPARK_MASTER_WEBUI_PORT=8085
-            - SPARK_MASTER_PORT=7077
-            - SPARK_RPC_AUTHENTICATION_ENABLED=no
-            - SPARK_RPC_ENCRYPTION_ENABLED=no
-            - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-            - SPARK_SSL_ENABLED=no
-            - SPARK_USER=spark
-            - BUCKET_TEST_NAME={{테스트 성격을 가진 AWS S3 BUCKET 이름}}  # 테스트 성격의 AWS S3-2 BUCKET
-            - BUCKET_DEV_NAME={{실제로 쓰이는 AWS S3 BUCKET 이름}}         # 실제 운영 성격의 AWS S3-2 BUCKET 
-            volumes:
-            - ./dev:/opt/bitnami/spark/dev
-            restart: always
-            network_mode: "host"
+          spark-master:
+              build: 
+                context: .  
+                dockerfile: Dockerfile 
+                container_name: spark-master
+              environment:
+                - SPARK_MODE=master
+                - SPARK_MASTER_HOST=172.31.3.183
+                - SPARK_MASTER_WEBUI_PORT=8085
+                - SPARK_MASTER_PORT=7077
+                - SPARK_RPC_AUTHENTICATION_ENABLED=no
+                - SPARK_RPC_ENCRYPTION_ENABLED=no
+                - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+                - SPARK_SSL_ENABLED=no
+                - SPARK_USER=spark
+                - BUCKET_TEST_NAME={{테스트 성격을 가진 AWS S3 BUCKET 이름}}  # 테스트 성격의 AWS S3-2 BUCKET
+                - BUCKET_DEV_NAME={{실제로 쓰이는 AWS S3 BUCKET 이름}}         # 실제 운영 성격의 AWS S3-2 BUCKET 
+              volumes:
+                - ./dev:/opt/bitnami/spark/dev
+              restart: always
+              network_mode: "host"
 
     ```
      - master, worker에 대한인지 역할 설정 
@@ -143,32 +143,32 @@
     ## Docker Container Up 할 떄 bridge network가 아니라 host network를 이용한다.
     version: '3.8'
     services:
-    spark-worker-1:
-        build: 
-        context: .  
-        dockerfile: Dockerfile 
-        container_name: spark-worker-1
-        user: "root"   # root 사용자로 실행
-        environment:
-        - SPARK_MODE=worker
-        - SPARK_MASTER_HOST=172.31.3.183:7077 # Spark Master와 연결 
-        - SPARK_MASTER_URL=spark://172.31.3.183:7077 # Spark Master와 연결 
-        - SPARK_WORKER_MEMORY=8G
-        - SPARK_WORKER_CORES=2
-        - SPARK_WORKER_WEBUI_PORT=8086
-        - SPARK_WORKER_PORT=18081 # Worker 포트는 Random이여서 18081로 고정
-        - SPARK_RPC_AUTHENTICATION_ENABLED=no
-        - SPARK_RPC_ENCRYPTION_ENABLED=no
-        - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-        - SPARK_SSL_ENABLED=no
-        - SPARK_USER=spark
-        restart: always  # 중단 시 자동으로 재시작
-        deploy:
-        resources:
-            limits:
-            cpus: "2.0"
-            memory: "8G"
-        network_mode: "host"
+      spark-worker-1:
+          build: 
+            context: .  
+            dockerfile: Dockerfile 
+            container_name: spark-worker-1
+          user: "root"   # root 사용자로 실행
+          environment:
+            - SPARK_MODE=worker
+            - SPARK_MASTER_HOST=172.31.3.183:7077 # Spark Master와 연결 
+            - SPARK_MASTER_URL=spark://172.31.3.183:7077 # Spark Master와 연결 
+            - SPARK_WORKER_MEMORY=8G
+            - SPARK_WORKER_CORES=2
+            - SPARK_WORKER_WEBUI_PORT=8086
+            - SPARK_WORKER_PORT=18081 # Worker 포트는 Random이여서 18081로 고정
+            - SPARK_RPC_AUTHENTICATION_ENABLED=no
+            - SPARK_RPC_ENCRYPTION_ENABLED=no
+            - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+            - SPARK_SSL_ENABLED=no
+            - SPARK_USER=spark
+          restart: always  # 중단 시 자동으로 재시작
+          deploy:
+          resources:
+              limits:
+              cpus: "2.0"
+              memory: "8G"
+          network_mode: "host"
     ```
 
     - Master와 연결하기 위한 설정, Worker들이 자원을 최대로 얼마나 사용할지에 대한 설정을 한다. 
