@@ -86,14 +86,16 @@ t4 = PythonOperator(
 전체 흐름 관련 코드입니다
 
 ```
-# 기존의 t2, t3, t4 태스크를 process_new_folder_task에 연결
-t2.set_upstream(process_new_folder_task)
-t3.set_upstream(t2)
-t4.set_upstream(t3)
 # Task 순서 설정
 t1 >> branch_task
 branch_task >> no_new_folder_task
 branch_task >> process_new_folder_task
+
+# 기존의 t2, t3, t4 태스크를 process_new_folder_task에 연결
+t2.set_upstream(process_new_folder_task)
+t3.set_upstream(t2)
+t4.set_upstream(t3)
+
 ```
 
 각각 python operator 구동 함수의 경우 코드 리뷰를 통해 확인 부탁드립니다.
