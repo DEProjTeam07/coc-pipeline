@@ -225,17 +225,18 @@ no_new_folder_task = DummyOperator(
     dag=dag,
 )
 
-# 새로운 폴더가 있는 우의 태스크 (기존의 t2, t3, t4)
+# 새로운 폴더가 있는  경우의 태스크 (기존의 t2, t3, t4)
 process_new_folder_task = DummyOperator(
     task_id='process_new_folder',
     dag=dag,
 )
 
-# 기존의 t2, t3, t4 태스크를 process_new_folder_task에 연결
-t2.set_upstream(process_new_folder_task)
-t3.set_upstream(t2)
-t4.set_upstream(t3)
+
 # Task 순서 설정
 t1 >> branch_task
 branch_task >> no_new_folder_task
 branch_task >> process_new_folder_task
+# 기존의 t2, t3, t4 태스크를 process_new_folder_task에 연결
+t2.set_upstream(process_new_folder_task)
+t3.set_upstream(t2)
+t4.set_upstream(t3)
