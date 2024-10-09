@@ -15,6 +15,17 @@
 
 이 Airflow DAG는 S3 버킷에서 데이터를 복사하고 PostgreSQL 데이터베이스에 삽입하는 데이터 파이프라인을 구현합니다. 또한 Spark 작업을 실행하고 GitHub Actions 워크플로우를 트리거합니다.
 
+
+- 수정시각 기준으로 출발지 S3 에서 가장 최근 폴더를 찾아내서 이전에 기록된 최신 폴더와 다를 경우 복사 진행
+
+- 폴더 변경사항 확인하기 위해 DB 조회통해서 하기
+
+## 새로운 폴더(데이터) 가 있을 경우와 없을 경우를 나눠서 분기처리함 
+
+<img width="1437" alt="image" src="https://github.com/user-attachments/assets/57c16af1-db74-4d54-9753-57d1c9e42d88">
+
+![image](https://github.com/user-attachments/assets/18396525-df36-415f-9783-293ad31da28e)
+
 ## 주요 기능
 
 - S3 버킷에서 최신 데이터 폴더 확인
