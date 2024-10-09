@@ -1,0 +1,52 @@
+# docker-compose.yaml
+services:
+  prometheus:
+    image: prom/prometheus:v2.43.0
+    container_name: prometheus
+    restart: always
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - ${NETWORK_NAME}
+
+  grafana:
+    image: grafana/grafana:10.1.1
+    container_name: grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+    ports:
+      - "3000:3000"
+    networks:
+      - ${NETWORK_NAME}
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  kafka-exporter:
+    image: danielqsj/kafka-exporter:v1.6.0
+    container_name: kafka-exporter
+    command:
+      - '--kafka.server=kafka-2:9092'
+    ports:
+      - "9308:9308"
+    networks:
+      - ${NETWORK_NAME}
+    restart: always
+
+  node-exporter:
+    image: prom/node-exporter:v1.6.0
+    container_name: node-exporter
+    restart: always
+    ports:
+      - "9100:9100"
+    networks:
+      - ${NETWORK_NAME}
+
+networks:
+  ${NETWORK_NAME}:
+    external: true
+
+volumes:
+  grafana_data:

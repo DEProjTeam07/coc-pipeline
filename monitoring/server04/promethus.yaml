@@ -1,0 +1,12 @@
+# promethus.yaml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'node'
+    static_configs:
+      - targets: ['172.31.15.63:9100']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'node_(cpu|memory|disk|filesystem|network).*'
+        action: keep
