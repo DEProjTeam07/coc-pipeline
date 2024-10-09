@@ -1,0 +1,91 @@
+version: '3'
+services:
+  # Kafka (KRaft 모드)
+  kafka-2:
+    image: confluentinc/cp-kafka:7.5.3
+    restart: always
+    container_name: kafka-2
+    extra_hosts:
+      - "server01:${KAFKA_SERVER_1_IP}"
+      - "server02:${KAFKA_SERVER_2_IP}"
+      - "server03:${KAFKA_SERVER_3_IP}"
+    user: "1000:1000"
+    environment:
+      KAFKA_KRAFT_MODE: true
+      KAFKA_NODE_ID: 2
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_SERVER_2_IP}:${KAFKA_PORT}
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@${KAFKA_SERVER_1_IP}:${KAFKA_CONTROLLER_PORT},2@${KAFKA_SERVER_2_IP}:${KAFKA_CONTROLLER_PORT},3@${KAFKA_SERVER_3_IP}:${KAFKA_CONTROLLER_PORT}'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_LOG_DIRS: '/var/lib/kafka/data'
+      CLUSTER_ID: ${CLUSTER_ID}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: false
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_HEAP_OPTS: "${KAFKA_HEAP_OPTS}"
+      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 3000
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    ports:
+      - "${KAFKA_PORT}:9092"
+      - "${KAFKA_CONTROLLER_PORT}:9093"
+    volumes:
+      - ${KAFKA_VOLUME_NAME}:/var/lib/kafka/data
+    networks:
+      - ${KAFKA_NETWORK_NAME}
+    deploy:
+      resources:
+        limits:
+          memory: ${KAFKA_MEMORY_LIMIT}
+          cpus: "${KAFKA_CPU_LIMIT}"
+        reservations:
+          memory: ${KAFKA_MEMORY_RESERVATION}
+          cpus: "${KAFKA_CPU_RESERVATION}"
+
+
+  # Kafka Connect와 Debezium (KRaft 모드)
+  kafka-connect-2:
+    image: debezium/connect:1.9
+    restart: always
+    container_name: kafka-connect-2
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: "${KAFKA_BOOTSTRAP_SERVERS}"
+      GROUP_ID: "${CONNECT_GROUP_ID}"
+      CONNECT_REST_PORT: 8083
+      CONFIG_STORAGE_TOPIC: "${CONNECT_CONFIG_TOPIC}"
+      OFFSET_STORAGE_TOPIC: "${CONNECT_OFFSET_TOPIC}"
+      STATUS_STORAGE_TOPIC: "${CONNECT_STATUS_TOPIC}"
+      KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_INTERNAL_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+      OFFSET_FLUSH_INTERVAL_MS: 60000
+      PLUGIN_PATH: "/usr/share/java"
+      REST_ADVERTISED_HOST_NAME: kafka-connect-2
+      CONNECT_SECURITY_PROTOCOL: PLAINTEXT
+      CONNECT_WORKER_TASKS_MAX: ${CONNECT_WORKER_TASKS_MAX}
+      CONNECT_CLIENT_ID: "${CONNECT_CLIENT_ID}"
+      CONNECT_SESSION_TIMEOUT_MS: 30000
+
+    depends_on:
+      - kafka-2
+    networks:
+      - kafka-network
+
+volumes:
+  ${KAFKA_VOLUME_NAME}:
+    driver: local
+
+networks:
+  ${KAFKA_NETWORK_NAME}:
+    driver: bridge
