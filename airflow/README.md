@@ -25,8 +25,9 @@
 <img width="1437" alt="image" src="https://github.com/user-attachments/assets/57c16af1-db74-4d54-9753-57d1c9e42d88">
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/18396525-df36-415f-9783-293ad31da28e" width="400">
+  <img src="https://github.com/user-attachments/assets/f0b68de8-46f8-4aa5-b4f8-963545e9ec7a" width="400">
 </p>
+
 
 ## 주요 기능
 
