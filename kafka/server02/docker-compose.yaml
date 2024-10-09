@@ -88,4 +88,5 @@ volumes:
 
 networks:
   ${KAFKA_NETWORK_NAME}:
+    name: ${KAFKA_NETWORK_NAME}
     driver: bridge

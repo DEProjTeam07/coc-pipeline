@@ -21,4 +21,5 @@ services:
 
 networks:
   ${NETWORK_NAME}:
-    driver: bridge
+    external: true
+    
