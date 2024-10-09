@@ -1,0 +1,31 @@
+# Spark Worker2 Node를 Image로 만들고(최초) Container로 Up 하도록 정의
+## Docker Container Up 할 떄 bridge network가 아니라 host network를 이용한다. 
+### 제 1안 
+services:
+  spark-worker-2:
+    build: 
+      context: .  
+      dockerfile: Dockerfile 
+    container_name: spark-worker-2
+    user: "root"
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_HOST=172.31.3.183:7077
+      - SPARK_MASTER_URL=spark://172.31.3.183:7077
+      - SPARK_WORKER_MEMORY=8G
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_WEBUI_PORT=8087
+      - SPARK_WORKER_PORT=18081 # Worker 포트는 랜덤이여서 18081로 고정 
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+    restart: always  # 중단 시 자동으로 재시작
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: "8G"
+    network_mode: "host"
+
