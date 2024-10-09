@@ -196,7 +196,7 @@ def trigger_github_action(**kwargs):
             raise ValueError("최신 폴더 path를 찾을 수 없습니다.")
 
         # GitHub API를 위한 설정
-        github_token = Variable.get("youngwoo_github_token")  # Airflow Variable에서 GitHub Token 가져오기
+        github_token = Variable.get("NEED_YOUR_GITHUB_TOKEN_VARIABLE")  # Airflow Variable에서 GitHub Token 가져오기
         repo_owner = "DEProjTeam07"  # 사용자명 입력
         repo_name = "coc-model"  # 레포지토리명 입력
         kst = pytz.timezone('Asia/Seoul')  # 한국 시간대 (Asia/Seoul)
@@ -230,7 +230,7 @@ def trigger_github_action(**kwargs):
 t1 = PythonOperator(
     task_id='check_for_new_folder',
     python_callable=task_check_for_new_folder,
-    op_kwargs={'bucket_name': 'deprojteam07-labeledrawdata'},
+    op_kwargs={'bucket_name': 'NEEDTOWRITE_SOURCEBUCKET'},
     provide_context=True,
     dag=dag,
 )
@@ -238,7 +238,7 @@ t1 = PythonOperator(
 t2 = PythonOperator(
     task_id='copy_directory',
     python_callable=task_copy_directory,
-    op_kwargs={'source_bucket': 'deprojteam07-labeledrawdata', 'destination_bucket': 'deprojteam07-datalake'},
+    op_kwargs={'source_bucket': 'NEEDTOWRITE_SOURCEBUCKET', 'destination_bucket': 'NEEDTOWRITE_DESTBUCKET'},
     provide_context=True,
     dag=dag,
 )
@@ -267,7 +267,7 @@ t5 = PythonOperator(
 branch_task = BranchPythonOperator(
     task_id='branch_check_for_new_folder',
     python_callable=task_check_for_new_folder,
-    op_kwargs={'bucket_name': 'deprojteam07-labeledrawdata'},
+    op_kwargs={'bucket_name': 'NEEDTOWRITE_SOURCEBUCKET'},
     provide_context=True,
     dag=dag,
 )
