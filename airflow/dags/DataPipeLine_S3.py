@@ -4,10 +4,13 @@ from airflow import DAG
 from airflow.operators.python_operator import PythonOperator, BranchPythonOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.hooks.postgres_hook import PostgresHook
+from airflow.models.variable import Variable
 from datetime import datetime, timedelta
 import docker
 import pytz
 import re
+import requests
+import json
 
 # S3 클라이언트 생성
 s3 = boto3.client('s3')
@@ -25,7 +28,7 @@ default_args = {
 
 # DAG 정의
 dag = DAG(
-    's3_sensor_to_db_dag_pipeline_final',
+    'DataPipeLine_S3',
     default_args=default_args,
     description='S3에서 데이터를 복사하고 DB에 삽입하는 DAG',
     schedule_interval=timedelta(days=1),
@@ -164,6 +167,8 @@ def task_insert_db(**kwargs):
             """
             pg_hook.run(insert_query, parameters=(converted_folder, current_time_kst))
             print(f"Inserted {converted_folder} into folder_log")
+
+            kwargs['ti'].xcom_push(key='converted_folder', value=converted_folder)
         except Exception as error:
             print(f"Error inserting into PostgreSQL: {error}")
 
@@ -179,12 +184,53 @@ def spark_submit_in_container():
     else:
         print("Spark Master 컨테이너를 찾을 수 없습니다.")
 
+# GitHub Action Workflow를 실행하기 위해 Trigger를 실행하는 함수 
+def trigger_github_action(**kwargs):
+    try:
+        # XCom에서 최신 폴더 path 받아오기
+        
+        folder_path = str(kwargs['ti'].xcom_pull(task_ids='insert_into_db', key='converted_folder'))  # 이전 Task의 return 값 사용
+        folder_path = folder_path.rstrip("/") # ex) version_1/를 version_1로 변경 
+        print(folder_path)
+        if not folder_path:
+            raise ValueError("최신 폴더 path를 찾을 수 없습니다.")
+
+        # GitHub API를 위한 설정
+        github_token = Variable.get("youngwoo_github_token")  # Airflow Variable에서 GitHub Token 가져오기
+        repo_owner = "DEProjTeam07"  # 사용자명 입력
+        repo_name = "coc-model"  # 레포지토리명 입력
+        kst = pytz.timezone('Asia/Seoul')  # 한국 시간대 (Asia/Seoul)
+        current_time_kst = datetime.now(kst).strftime('%Y-%m-%d %H:%M:%S')  # 현재 한국 시간 가져오기
+
+        # GitHub Actions를 트리거하기 위해 repository_dispatch 이벤트를 사용
+        dispatch_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/dispatches"
+        headers = {
+            "Authorization": f"token {github_token}",
+            "Accept": "application/vnd.github.v3+json"
+        }
+        dispatch_data = {
+            "event_type": "trigger_action",  # GitHub Actions에서 감지할 이벤트 이름
+            "client_payload": {  # 추가적으로 보내고 싶은 데이터를 포함
+                "message": f"S3에 새로운 데이터 셋이 업데이트 되었습니다. {current_time_kst}",
+                "folder_path": folder_path
+            }
+        }
+        dispatch_response = requests.post(dispatch_url, headers=headers, data=json.dumps(dispatch_data))
+
+        if dispatch_response.status_code != 204:
+            raise Exception(f"Failed to dispatch event to GitHub Actions: {dispatch_response.text}")
+
+        print("Github Action Workflow가 성공적으로 트리거되었습니다.")
+
+    except Exception as error:
+        print(f"Error dispatching event to GitHub Actions: {error}")
+        raise
 
 # Task 정의
 t1 = PythonOperator(
     task_id='check_for_new_folder',
     python_callable=task_check_for_new_folder,
-    op_kwargs={'bucket_name': 'SOURCE_BUCKET_작성필요'},
+    op_kwargs={'bucket_name': 'deprojteam07-labeledrawdata'},
     provide_context=True,
     dag=dag,
 )
@@ -192,7 +238,7 @@ t1 = PythonOperator(
 t2 = PythonOperator(
     task_id='copy_directory',
     python_callable=task_copy_directory,
-    op_kwargs={'source_bucket': 'SOURCE_BUCKET_작성필요', 'destination_bucket': 'DESTINATION_BUCKET_작성필요'},
+    op_kwargs={'source_bucket': 'deprojteam07-labeledrawdata', 'destination_bucket': 'deprojteam07-datalake'},
     provide_context=True,
     dag=dag,
 )
@@ -210,11 +256,18 @@ t4 = PythonOperator(
     dag=dag 
 )
 
+t5 = PythonOperator(
+    task_id='trigger_github_action',
+    python_callable=trigger_github_action,
+    provide_context=True,
+    dag=dag,
+)
+
 # BranchPythonOperator 정의
 branch_task = BranchPythonOperator(
     task_id='branch_check_for_new_folder',
     python_callable=task_check_for_new_folder,
-    op_kwargs={'bucket_name': 'SOURCE_BUCKET_작성필요'},
+    op_kwargs={'bucket_name': 'deprojteam07-labeledrawdata'},
     provide_context=True,
     dag=dag,
 )
@@ -225,18 +278,21 @@ no_new_folder_task = DummyOperator(
     dag=dag,
 )
 
-# 새로운 폴더가 있는  경우의 태스크 (기존의 t2, t3, t4)
+# 새로운 폴더가 있는 우의 태스크 (기존의 t2, t3, t4)
 process_new_folder_task = DummyOperator(
     task_id='process_new_folder',
     dag=dag,
 )
 
 
+
 # Task 순서 설정
 t1 >> branch_task
 branch_task >> no_new_folder_task
 branch_task >> process_new_folder_task
+
 # 기존의 t2, t3, t4 태스크를 process_new_folder_task에 연결
 t2.set_upstream(process_new_folder_task)
 t3.set_upstream(t2)
 t4.set_upstream(t3)
+t5.set_upstream(t4)

@@ -22,8 +22,6 @@ USER airflow
 # 추가 Python 패키지 설치
 RUN pip install \
     confluent-kafka==2.5.3 \
-    apache-airflow-providers-apache-kafka 
-    # 카프카 프로바이더 안쓰긴 하는데 추후에 수정
 # 추가 패키지 설치
 # argparse 제거
 RUN pip uninstall -y argparse
