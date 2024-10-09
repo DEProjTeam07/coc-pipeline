@@ -5,6 +5,7 @@ FROM bitnami/spark:3.5.1
 USER root
 
 # 필요한 패키지 설치 (curl, wget, ping, net-tools 등) 및 boto3 설치
+# 생각해보니 vim도 설치해야 할 듯 하다. 
 RUN apt-get update && \
     apt-get install -y curl wget iputils-ping net-tools vim && \
     pip install boto3 Pillow
@@ -23,6 +24,9 @@ RUN wget -P /opt/bitnami/spark/jars \
 
 # Spark History Server를 켜기 위한 사전 설정을 한다. 
 COPY spark-defaults.conf /opt/bitnami/spark/conf/spark-defaults.conf
+
+# spark-prometheus-native metric 모니터링 관련 설정 파일
+COPY metrics.properties /opt/bitnami/spark/conf/metrics.properties
 
 # 작업 디렉토리를 /opt/bitnami/spark으로 설정
 WORKDIR /opt/bitnami/spark

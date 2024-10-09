@@ -21,5 +21,8 @@ RUN wget -P /opt/bitnami/spark/jars \
     wget -P /opt/bitnami/spark/jars \
     https://repo1.maven.org/maven2/org/apache/spark/spark-token-provider-kafka-0-10_2.12/3.5.1/spark-token-provider-kafka-0-10_2.12-3.5.1.jar
 
+# spark-prometheus-native metric 모니터링 관련 설정 파일
+COPY metrics.properties /opt/bitnami/spark/conf/metrics.properties
+
 # 작업 디렉토리를 /opt/bitnami/spark으로 설정
 WORKDIR /opt/bitnami/spark

@@ -1,6 +1,5 @@
 # Spark Master Node를 Image로 만들고(최초) Container로 Up 하도록 정의
 ## Docker Container Up 할 떄 bridge network가 아니라 host network를 이용한다.  
-version: '3.8'
 services: 
   spark-master:
     build: 

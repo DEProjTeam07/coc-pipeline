@@ -188,6 +188,121 @@ root@ip-172-31-3-183:/opt/bitnami/spark#
 ```
 
 
+<br>
+
+
+<h3> Prometheous로 Spark 모니터링 지표를 수집하고 Grafana로 시각화 하는 흐름 관련 </h3>
+
+- Spark를 수행할 떄 발생하는 지표를 Prometheous가 수집하는데 이를 위한 사전 설정을 이야기하고자 한다. 
+
+  - Spark Master에 대해서 모니터링을 위한 사전 설정 (metrics.properties) 
+
+    <br>
+
+    ```
+    *.sink.prometheusServlet.class=org.apache.spark.metrics.sink.PrometheusServlet
+    *.sink.prometheusServlet.path=/metrics/prometheus
+    master.sink.prometheusServlet.path=/metrics/master/prometheus
+    applications.sink.prometheusServlet.path=/metrics/applications/prometheus
+    ```
+
+  <br>
+
+
+
+  - Spark Worker에 대해서 모니터링을 위한 사전 설정 (metrics.properties)
+
+    <br>
+
+
+    ```
+    *.sink.prometheusServlet.class=org.apache.spark.metrics.sink.PrometheusServlet
+    *.sink.prometheusServlet.path=/metrics/prometheus
+    master.sink.prometheusServlet.path=/metrics/master/prometheus
+    applications.sink.prometheusServlet.path=/metrics/applications/prometheus
+
+    ```
+  
+  <br>
+
+
+- 어디서 Spark 모니터링을 위한 사전 설정을 참고하는가? 
+  
+  - prometheous.yaml에서 이를 참고한다. 
+
+  ```
+   # promethus.yaml
+      global:
+        scrape_interval: 15s
+
+      scrape_configs:       
+       - job_name: 'spark_master_native'
+          metrics_path: '/metrics/master/prometheus'
+          static_configs:
+            - targets: ['172.31.3.183:8085']
+
+        - job_name: 'spark_applications_native'
+          metrics_path: '/metrics/applications/prometheus'
+          static_configs:
+            - targets: ['172.31.3.183:8085']
+
+        - job_name: 'spark_worker-1_native'
+          metrics_path: '/metrics/worker/prometheus'
+          static_configs:
+            - targets: ['172.31.2.37:8086']
+
+        - job_name: 'spark_worker-2_native'
+          metrics_path: '/metrics/worker/prometheus'
+          static_configs:
+            - targets: ['172.31.0.17:8087']
+  ```
+
+<br>
+
+<br>
+
+- 만약 Spark에 대한 모니터링을 확인하고 싶으면? 
+  
+  - Prometheous와 Granfa를 실행해야 한다. 아래와 같이 docker-compose.yaml에 정의를 하고 Container로 Up을 한다. 
+
+  - Spark가 작동할 떄 Prometheous가 지표를 수집할 것이며 Grafana로 시각화 해서 지표를 시각적으로 확인할 수 있게 된다. 
+
+  - 아래 화면은 어디까지나 예시이다. 
+
+  <br>
+
+
+    ```
+     # docker-compose.yaml
+      services:
+        prometheus:
+          image: prom/prometheus:v2.43.0
+          container_name: prometheus
+          volumes:
+            - ./prometheus.yml:/etc/prometheus/prometheus.yml
+          ports:
+            - "9090:9090"
+
+        grafana:
+          image: grafana/grafana:10.1.1
+          container_name: grafana
+          environment:
+            - GF_SECURITY_ADMIN_PASSWORD=admin123
+          ports:
+            - "3000:3000"
+          volumes:
+            - grafana_data:/var/lib/grafana
+
+      volumes:
+        grafana_data:
+          driver: local
+    ```
+    
+
+
+
+
+
 
 
 
