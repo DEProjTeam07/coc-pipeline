@@ -22,7 +22,8 @@
 
 ## 새로운 폴더(데이터) 가 있을 경우와 없을 경우를 나눠서 분기처리함 
 
-<img width="1437" alt="image" src="https://github.com/user-attachments/assets/57c16af1-db74-4d54-9753-57d1c9e42d88">
+<img width="1437" alt="image" src="https://github.com/user-attachments/assets/01937ff0-be3f-4abc-be65-d3ae6752259d">
+
 
 <p align="center">
   <img src="https://github.com/user-attachments/assets/f0b68de8-46f8-4aa5-b4f8-963545e9ec7a" width="400">
