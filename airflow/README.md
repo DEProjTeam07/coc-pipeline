@@ -9,92 +9,58 @@
 
 
 
+# S3 Data Pipeline DAG
 
-## 출발지 S3의 최신 변경 사항을 감지후(DB 기록 사항과 비교) Task 작성
-```python
-t1 = PythonOperator(
-    task_id='check_for_new_folder',
-    python_callable=task_check_for_new_folder,
-    op_kwargs={'bucket_name': 'SOURCE_BUCKET_작성필요'},
-    provide_context=True,
-    dag=dag,
-)
-```
-### 유의 사항: 
-- 출발지 S3 에 들어오는 데이터 폴더명과 DB에 기록되는 사항이 다르므로 
-정규식으로 처리 하였음 맨 끝 버전과 관련한 사항은 같다는 것을 이용 
- 
+## 개요
 
+이 Airflow DAG는 S3 버킷에서 데이터를 복사하고 PostgreSQL 데이터베이스에 삽입하는 데이터 파이프라인을 구현합니다. 또한 Spark 작업을 실행하고 GitHub Actions 워크플로우를 트리거합니다.
 
-- 목적지 S3에 COPY Task 작성
-```python
-t2 = PythonOperator(
-    task_id='copy_directory',
-    python_callable=task_copy_directory,
-    op_kwargs={'source_bucket': 'SOURCE_BUCKET_작성필요', 'destination_bucket': 'DESTINATION_BUCKET_작성필요'},
-    provide_context=True,
-    dag=dag,
-)
-```
- 목적지의 신규 데이터 경로 DB에 insert Task 작성
-```python
-t3 = PythonOperator(
-    task_id='insert_into_db',
-    python_callable=task_insert_db,
-    provide_context=True,
-    dag=dag,
-)
-```
- 최신 변경 사항 없을 시 분기 처리하여 곧바로 DAG 종료 Task 작성
-```python
-branch_task = BranchPythonOperator(
-    task_id='branch_check_for_new_folder',
-    python_callable=task_check_for_new_folder,
-    op_kwargs={'bucket_name': 'SOURCE_BUCKET_작성필요'},
-    provide_context=True,
-    dag=dag,
-)
+## 주요 기능
 
-# 새로운 폴더가 없는 경우의 더미 태스크
-no_new_folder_task = DummyOperator(
-    task_id='no_new_folder',
-    dag=dag,
-)
+- S3 버킷에서 최신 데이터 폴더 확인
+- 새로운 데이터 폴더를 다른 S3 버킷으로 복사
+- PostgreSQL 데이터베이스에 새 폴더 정보 기록
+- Docker 컨테이너 내에서 Spark 작업 실행
+- GitHub Actions 워크플로우 트리거
 
-# 새로운 폴더가 있는 우의 태스크 (기존의 t2, t3, t4)
-process_new_folder_task = DummyOperator(
-    task_id='process_new_folder',
-    dag=dag,
-)
-```
+## DAG 구조
 
- Spark가 데이터를 받아서 train.json, test.json을 수행하는 Application 실행 Task 작성
+1. **check_for_new_folder**: S3에서 새로운 데이터 폴더 확인
+2. **branch_check_for_new_folder**: 새 폴더 유무에 따른 분기 처리
+3. **copy_directory**: 새 폴더를 대상 S3 버킷으로 복사
+4. **insert_into_db**: PostgreSQL에 새 폴더 정보 삽입
+5. **spark_submit_in_container**: Docker 컨테이너에서 Spark 작업 실행
+6. **trigger_github_action**: GitHub Actions 워크플로우 트리거
 
-[CONFIG] Spark 구성  #7 이슈에 구현사항 있으나 다시 언급하였습니다.
+## 설정
 
-```python
-t4 = PythonOperator(
-    task_id='spark_submit_in_container',
-    python_callable=spark_submit_in_container,
-    dag=dag 
-)
-```
+- **기본 인수**:
+  - 소유자: airflow
+  - 시작 날짜: 2024년 9월 11일 (변경할것)
+  - 재시도: 1회
+  - 재시도 지연: 5분
 
+- **스케줄**: 매일 실행
 
-전체 흐름 관련 코드입니다
+## 주요 함수
 
-```
-# Task 순서 설정
-t1 >> branch_task
-branch_task >> no_new_folder_task
-branch_task >> process_new_folder_task
+- `get_latest_versioned_folder`: S3에서 최신 버전 폴더 찾기
+- `get_latest_folder_from_db`: PostgreSQL에서 최신 폴더 정보 가져오기
+- `task_check_for_new_folder`: 새 폴더 확인 및 처리 분기
+- `task_copy_directory`: S3 객체 복사
+- `task_insert_db`: PostgreSQL에 데이터 삽입
+- `spark_submit_in_container`: Docker 컨테이너에서 Spark 작업 실행
+- `trigger_github_action`: GitHub Actions 워크플로우 트리거
 
-# 기존의 t2, t3, t4 태스크를 process_new_folder_task에 연결
-t2.set_upstream(process_new_folder_task)
-t3.set_upstream(t2)
-t4.set_upstream(t3)
+## 의존성
 
-```
+- Python 라이브러리: boto3, airflow, docker, pytz, re, requests, json
+- Airflow 연결: PostgreSQL (postgres_flat_fix)
+- Airflow 변수: github_token
 
-각각 python operator 구동 함수의 경우 코드 리뷰를 통해 확인 부탁드립니다.
+## 주의사항
+
+- S3 버킷 이름, GitHub 레포지토리 정보 등은 실제 환경에 맞게 수정해야 합니다.
+- 필요한 권한과 인증 정보가 올바르게 설정되어 있어야 합니다.
+
 
